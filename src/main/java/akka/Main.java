@@ -5,10 +5,14 @@ import akka.actor.typed.ActorSystem;
 import akka.actor.typed.javadsl.AskPattern;
 
 /* 
- * AlarmProcessingV2/processor:
- * Akka based Alarm Processor.
- * 
- * In order to find out the time taken to process all the alarms being generated,
+ * Summary: Akka based. 
+ * No AddNode. Not connected to JNC.
+ * EmsManagerBehavior generates  alarms.
+ * EMSWorker prints the alarms. 
+ * Total time taken is tracked.
+ */
+
+/* Details: In order to find out the total time taken to process all the alarms,
  * the-last-stop-class EmsWorkerBehavior returns back to EmsManagerBehavior.
  * 
  * In order to save number of calls, EmsWorkerBehavior DIRECTLY returns back to 

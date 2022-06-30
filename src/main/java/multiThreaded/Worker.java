@@ -8,8 +8,8 @@ import model.Alarm;
 
 public class Worker implements Runnable {
 	Alarm alarm;
-	List<Timestamp> timeStamps;
-	private List<Integer> elapsedTimeList;
+	List<Timestamp> timeStamps;	//Shared memory
+	private List<Integer> elapsedTimeList;//Shared memory
 
 	public Worker (Alarm alarm, List<Timestamp> timeStamps, List<Integer> elapsedTimeList) {
 		this.alarm = alarm;	

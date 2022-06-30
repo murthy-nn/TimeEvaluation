@@ -9,6 +9,19 @@ import java.util.concurrent.ThreadFactory;
 
 import model.Alarm;
 
+/* Summary: 
+ * Main method generates alarms and give them to the Executors.
+ * Executors based threadPool to process the alarms.
+ * Worker thread prints the alarms in the basic version. Will perform advanced
+ * operation such as filtering, throttling, etc.
+ * CheckForResults will close the Executors once all the alarms are processed.
+ * 
+ * How does CheckForResults work?
+ * Main let CheckForResults know how many alarms will be generated.
+ * Worker notifies CheckForResults after processing an alarm.
+ * CheckForResults in turn check whether all the alarms are processed.
+ * Once all alarm processed, CheckForResults generates the time report.
+ */
 public class Main {
 	public static void main(String[] args) {
 		int alarmsToBeProcessed = 1000; // Alarms to be generated and processed
@@ -16,7 +29,10 @@ public class Main {
 		//Create a threadpool of Workers
 		ExecutorService es = Executors.newFixedThreadPool(10, new MyThreadFactory());
 		
-		List <Timestamp> timeStamps =  new ArrayList<Timestamp>();  
+		//Timestamp of processing each alarm
+		List <Timestamp> timeStamps =  new ArrayList<Timestamp>(); 
+		
+		//Elapsed time for processing each alarm.
 		List <Integer> elapsedTimeList =  new ArrayList<Integer>();  
 
 		//Create a Result-Checking thread

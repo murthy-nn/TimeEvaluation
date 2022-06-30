@@ -6,11 +6,13 @@ import java.util.Collections;
 import java.util.List;
 
 public class CheckForResults implements Runnable {
-	List <Timestamp> timeStamps;  
 	int alarmsToBeProcessed = 0;
+	
+	List <Timestamp> timeStamps;  //Shared memory
+	private List<Integer> elapsedTimeList;//Shared memory
+
 	Long startTime = System.currentTimeMillis();
 	Timestamp startTime1 = new Timestamp(System.currentTimeMillis());
-	private List<Integer> elapsedTimeList;
 
 	public CheckForResults(int alarmsToBeProcessed, List <Timestamp> timeStamps, List<Integer> elapsedTimeList) {
 		this.timeStamps = timeStamps;
@@ -42,8 +44,8 @@ public class CheckForResults implements Runnable {
 							new Timestamp(System.currentTimeMillis()) + " -- endTime recorded by CheckForResults\n" + 
 							timeStamps.get(alarmsToBeProcessed-1) + " -- Latest timeStamps reported by worker ");
 					
-					System.out.println("Min time taken by a runnable for mining " + elapsedTimeList.get(0));
-					System.out.println("Max time taken by a runnable for mining " + 
+					System.out.println("Min time taken for processing an alarm " + elapsedTimeList.get(0));
+					System.out.println("Max time taken for processing an alarm " + 
 							elapsedTimeList.get(elapsedTimeList.size()-1) + "\n");
 					
 					break;

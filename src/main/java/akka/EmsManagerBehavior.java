@@ -38,14 +38,12 @@ public class EmsManagerBehavior extends AbstractBehavior<EmsManagerBehavior.Comm
 	/******** OO style Message handlers ********/
 	public Receive<Command> createReceiveOO() {
 		return newReceiveBuilder()
-				.onMessage(ProcessAlarmEvent.class, this::onProcessAlarmEvent)
+				.onMessage(GenerateAlarmEvent.class, this::onGenerateAlarmEvent)
 				.onMessage(ProcessAlarmResponse.class, this::onProcessAlarmResponse)
 				.build();
 	}
-	private Behavior<Command> onProcessAlarmEvent (
-			ProcessAlarmEvent command) {
-		//TODO: FIFO ordering, Rogue node elimination, alarm throttling, etc
-		
+	private Behavior<Command> onGenerateAlarmEvent (
+			GenerateAlarmEvent command) {		
 		Behavior<EmsRouterBehavior.Command> routerBehavior =
 				Behaviors.supervise(EmsRouterBehavior.create()).onFailure(SupervisorStrategy.resume());
 		ActorRef<EmsRouterBehavior.Command> router = getContext().spawn(routerBehavior, "router");
@@ -78,9 +76,9 @@ public class EmsManagerBehavior extends AbstractBehavior<EmsManagerBehavior.Comm
 	}
 	
 	/******** Message or command definition ********/
-	public static class ProcessAlarmEvent implements Command {
+	public static class GenerateAlarmEvent implements Command {
 		private static final long serialVersionUID = 1L;
-		public ProcessAlarmEvent() {
+		public GenerateAlarmEvent() {
 			super();
 		}
 	}

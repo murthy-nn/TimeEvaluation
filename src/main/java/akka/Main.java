@@ -10,10 +10,15 @@ import akka.actor.typed.javadsl.AskPattern;
  * EmsManagerBehavior generates  alarms.
  * EMSWorker prints the alarms. 
  * Total time taken is tracked.
+ * EmsManagerBehavior shutdown the ActorSystem once all
+ * the alarms are processed.
  */
 
-/* Details: In order to find out the total time taken to process all the alarms,
- * the-last-stop-class EmsWorkerBehavior returns back to EmsManagerBehavior.
+/* Details: How is total time calculated?
+ * EmsManager supports a new message ProcessAlarmResponse.
+ * EmsWorkerBehavior directly calls EmsManager::ProcessAlarmResponse.
+ * Once all alarms are processed, EmsManager reports the time taken
+ * and shutdown the ActorSystem.
  * 
  * In order to save number of calls, EmsWorkerBehavior DIRECTLY returns back to 
  * EmsManagerBehavior avoiding the intermediate classes such as RouterBehavior.
@@ -32,7 +37,7 @@ public class Main {
 				ActorSystem.create(EmsManagerBehavior.create(), "AlarmProcessor");
 
 		AskPattern.ask(actorSystem,
-				me -> new EmsManagerBehavior.ProcessAlarmEvent(),
+				me -> new EmsManagerBehavior.GenerateAlarmEvent(),
 				Duration.ofSeconds(30),
 				actorSystem.scheduler());
 	}

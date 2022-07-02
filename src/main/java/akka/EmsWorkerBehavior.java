@@ -37,7 +37,6 @@ public class EmsWorkerBehavior extends AbstractBehavior<EmsWorkerBehavior.Comman
 	}
 	
 	/******** FP style Message handlers ********/
-	//FP style
 	public Receive<Command> createReceiveFP() {
 		return newReceiveBuilder()
 				.onMessage(ProcessAlarmEvent.class, message -> {
@@ -65,10 +64,23 @@ public class EmsWorkerBehavior extends AbstractBehavior<EmsWorkerBehavior.Comman
 			ProcessAlarmEvent command) {
 		//TODO: write into DB, notify others, etc
 		Timestamp ts = new Timestamp(System.currentTimeMillis());
-		getContext().getLog().debug(command.getAlarm() + 	" @ " +ts );
+		//With following line commented out, Akka takes less time than the multi-threaded application
+		//getContext().getLog().debug("Processed " + command.getAlarm() + 	" @ " + ts );
 
+		if (command.getAlarm().getDescription().equals("Alarm-1") ) {
+			getContext().getLog().debug("Processed the first alarm @ " + ts );
+		}
+		
+		/* TODO: alarmsToBeProcessed to be manually updated here and in
+		 * EmsManagerBehavior 
+		 */
+		if (command.getAlarm().getDescription().equals("Alarm-100000") ) {
+			getContext().getLog().debug("Processed the last alarm @ " + ts );
+		}
 		command.getController().tell(
-				new EmsManagerBehavior.ProcessAlarmResponse (LocalDateTime.now()));
+				new EmsManagerBehavior.AlarmProcessedEvent (ts));
+				//new EmsManagerBehavior.AlarmProcessedEvent (LocalDateTime.now()));
+
 		return this;
 	}
 	

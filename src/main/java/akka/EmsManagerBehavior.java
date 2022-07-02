@@ -17,8 +17,8 @@ import model.Alarm;
  */
 public class EmsManagerBehavior extends AbstractBehavior<EmsManagerBehavior.Command> {
 	public interface Command extends Serializable {}
-	private int alarmProcessed = 0;
-	private int alarmsToBeProcessed = 100; // Alarms to be generated and processed
+	private int totalAlarmProcessed = 0;
+	private int alarmsToBeProcessed = 100000; // Alarms to be generated and processed
 	Long startTime = 0L;
 
 	private EmsManagerBehavior(ActorContext<EmsManagerBehavior.Command> context) {
@@ -39,36 +39,54 @@ public class EmsManagerBehavior extends AbstractBehavior<EmsManagerBehavior.Comm
 	public Receive<Command> createReceiveOO() {
 		return newReceiveBuilder()
 				.onMessage(GenerateAlarmEvent.class, this::onGenerateAlarmEvent)
-				.onMessage(ProcessAlarmResponse.class, this::onProcessAlarmResponse)
+				.onMessage(AlarmProcessedEvent.class, this::onAlarmProcessed)
 				.build();
 	}
 	private Behavior<Command> onGenerateAlarmEvent (
-			GenerateAlarmEvent command) {		
+			GenerateAlarmEvent command) {
+		Timestamp ts = new Timestamp(System.currentTimeMillis());
+
 		Behavior<EmsRouterBehavior.Command> routerBehavior =
 				Behaviors.supervise(EmsRouterBehavior.create()).onFailure(SupervisorStrategy.resume());
 		ActorRef<EmsRouterBehavior.Command> router = getContext().spawn(routerBehavior, "router");
 		
 		for (int i=1; i<=alarmsToBeProcessed; i++) {
 			Alarm alarm = new Alarm ("Alarm-"+i, "1.2.3.4", i, "10am");
+			if (i ==1 ) {
+				getContext().getLog().debug("Generated the first alarm @ " + ts );
+			}
+			if (i ==alarmsToBeProcessed ) {
+				getContext().getLog().debug("Generated the last alarm @ " + ts );
+			}
+			
+			//With following line commented out, Akka takes less time than the multi-threaded application
+			//getContext().getLog().debug("Generated " + alarm + 	" @ " + new Timestamp(System.currentTimeMillis()));
 
-			getContext().getLog().debug("Alarm: " + alarm + 	" @ " +
-					new Timestamp(System.currentTimeMillis()));
-
-			getContext().watch(router);
+			//getContext().watch(router);//Not required as per Lightbend discussion
 			router.tell(new EmsRouterBehavior.ProcessAlarmEvent(alarm, getContext().getSelf()));
 		}
 
 		return this;
 	}
 
-	private Behavior<Command> onProcessAlarmResponse (
-			ProcessAlarmResponse command){
-		getContext().getLog().debug("# of Alarm processed " + alarmProcessed );
-		alarmProcessed ++;
+	private Behavior<Command> onAlarmProcessed (
+			AlarmProcessedEvent command){
+		Timestamp ts = new Timestamp(System.currentTimeMillis());
 		
-		if (alarmProcessed == alarmsToBeProcessed) {
+		//With following line commented out, Akka takes less time than the multi-threaded application
+		//getContext().getLog().debug("# of Alarm processed " + totalAlarmProcessed );		
+		
+		if (totalAlarmProcessed == 0) {
+			getContext().getLog().debug("Notified by the worker that FIRST alarm is processed @ " + ts);
+			//getContext().getLog().debug("Notified by the worker that FIRST alarm is processed " + command.getTimeStamp());
+		}
+		
+		totalAlarmProcessed ++;
+
+		if (totalAlarmProcessed == alarmsToBeProcessed) {
+			getContext().getLog().debug("Notified by the worker that LAST alarm is processed @ " + ts);
 			Long endTime = System.currentTimeMillis();
-			getContext().getLog().info("Akka:  " + (endTime - startTime) + 
+			getContext().getLog().debug("Akka:  " + (endTime - startTime) + 
 					" ms taken to process " + alarmsToBeProcessed + " alarms");
 			getContext().getSystem().terminate();
 		}
@@ -83,17 +101,18 @@ public class EmsManagerBehavior extends AbstractBehavior<EmsManagerBehavior.Comm
 		}
 	}
 
-	public static class ProcessAlarmResponse implements Command {
+	public static class AlarmProcessedEvent implements Command {
 		private static final long serialVersionUID = 1L;
-		private LocalDateTime  localDateTime ;
-		public ProcessAlarmResponse(LocalDateTime localDateTime) {
+		private Timestamp  ts ;
+		public AlarmProcessedEvent(Timestamp ts) {
 			super();
+			this.ts = ts;
 		}
-		public LocalDateTime getLocalDateTime() {
-			return localDateTime;
+		public Timestamp getTimeStamp() {
+			return ts;
 		}
-		public void setLocalDateTime(LocalDateTime localDateTime) {
-			this.localDateTime = localDateTime;
+		public void setTimeStamp(Timestamp ts) {
+			this.ts = ts;
 		}
 	}
 }
